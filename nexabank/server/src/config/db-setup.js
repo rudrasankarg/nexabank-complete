@@ -4,19 +4,25 @@ require('dotenv').config({ path: path.join(__dirname, '../../.env.local') });
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 async function setup() {
-  console.log('🚀 NexaBank Database Setup Wizard');
+  console.log(' NexaBank Database Setup Wizard');
   
   // Try to connect as the default 'postgres' superuser to fix permissions
+  const superuserPassword = process.env.POSTGRES_SUPERUSER_PASSWORD;
+  if (!superuserPassword) {
+    console.error(' POSTGRES_SUPERUSER_PASSWORD is not set in your .env or .env.local file.');
+    process.exit(1);
+  }
+
   const client = new Client({
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,
-    user: 'postgres',
-    password: 'ManUtd@2006' 
+    user: process.env.DB_SUPERUSER || 'postgres',
+    password: superuserPassword,
   });
 
   try {
     await client.connect();
-    console.log('✅ Connected to PostgreSQL as superuser');
+    console.log(' Connected to PostgreSQL as superuser');
 
     // 1. Ensure user exists and has correct password
     console.log('   Syncing user "nexabank_user"...');
@@ -39,16 +45,16 @@ async function setup() {
         INSERT INTO branches (branch_code, name, ifsc_code, address, city, state, pincode)
         VALUES ('HO001', 'Head Office', 'NEXA0000001', 'Nexa Tower, Financial District', 'Mumbai', 'Maharashtra', '400001')
       `);
-      console.log('✅ Default branch seeded');
+      console.log(' Default branch seeded');
     } else {
-      console.log('ℹ️ Branch already exists');
+      console.log('ℹ Branch already exists');
     }
 
-    console.log('\n🎉 DB Setup & Seeding Complete!');
+    console.log('\n DB Setup & Seeding Complete!');
     
   } catch (err) {
-    console.error('\n❌ Setup Failed:', err.message);
-    console.log('\n💡 TIP: If you use a different "postgres" password, update it in this script (db-setup.js) at line 13.');
+    console.error('\n Setup Failed:', err.message);
+    console.log('\n TIP: Set POSTGRES_SUPERUSER_PASSWORD in your .env.local file to match your local postgres superuser password.');
   } finally {
     await client.end();
   }
