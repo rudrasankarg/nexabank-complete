@@ -31,7 +31,7 @@ async function connectRedis() {
 // In-memory fallback for dev without Redis
 const memStore = new Map();
 
-async function setex(key, seconds, value) {
+async function setEx(key, seconds, value) {
   if (!client) {
     memStore.set(key, { value, exp: Date.now() + seconds * 1000 });
     return;
@@ -59,4 +59,4 @@ async function exists(key) {
   return await client.exists(key);
 }
 
-module.exports = { connectRedis, setex, get, del, exists };
+module.exports = { connectRedis, setEx, get, del, exists };
