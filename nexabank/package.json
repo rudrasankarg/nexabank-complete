@@ -1,0 +1,43 @@
+{
+  "name": "nexabank",
+  "version": "1.0.0",
+  "description": "NexaBank - Full-Stack Online Banking System",
+  "private": true,
+  "workspaces": [
+    "web",
+    "server",
+    "mobile",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:server\"",
+    "dev:web": "npm run dev --workspace=web",
+    "dev:server": "npm run dev --workspace=server",
+    "dev:mobile": "npm run dev --workspace=mobile",
+    "build": "npm run build --workspace=web && npm run build --workspace=server",
+    "build:web": "npm run build --workspace=web",
+    "build:server": "npm run build --workspace=server",
+    "start": "npm run start --workspace=server",
+    "db:migrate": "npm run migrate --workspace=server",
+    "db:seed": "npm run seed --workspace=server",
+    "db:reset": "npm run db:reset --workspace=server",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "banking",
+    "fintech",
+    "nextjs",
+    "react-native",
+    "postgresql"
+  ],
+  "author": "NexaBank Team",
+  "license": "UNLICENSED"
+}

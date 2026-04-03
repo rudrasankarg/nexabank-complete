@@ -1,0 +1,186 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap');
+
+:root {
+  --font-geist-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-clash: 'Clash Display', system-ui, sans-serif;
+
+  --navy-950: #020817;
+  --navy-900: #060f2e;
+  --navy-800: #112259;
+  --navy-700: #1e3575;
+  --navy-600: #2d4a8e;
+  --gold-500: #d49a10;
+  --gold-400: #ecb422;
+  --gold-300: #f1c94d;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-geist-sans);
+  background: var(--navy-950);
+  color: #e2e8f0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ─────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* ── Selection ─────────────────────── */
+::selection { background: rgba(212,154,16,0.3); color: #fef3c7; }
+
+/* ── Focus ─────────────────────────── */
+*:focus-visible {
+  outline: 2px solid var(--gold-400);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Glass Card ────────────────────── */
+.glass {
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.glass-strong {
+  background: rgba(17,34,89,0.6);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ── Gradient Text ─────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #f1c94d 0%, #ecb422 40%, #d49a10 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-blue {
+  background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 50%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Shimmer Loading ───────────────── */
+.shimmer {
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.03) 0%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+/* ── Credit Card ───────────────────── */
+.card-shine {
+  position: relative;
+  overflow: hidden;
+}
+.card-shine::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(255,255,255,0.06) 60deg, transparent 120deg);
+  animation: rotate 8s linear infinite;
+  pointer-events: none;
+}
+@keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ── Sidebar Nav ───────────────────── */
+.nav-item {
+  @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 text-sm font-medium
+         transition-all duration-200 cursor-pointer;
+}
+.nav-item:hover {
+  @apply bg-white/5 text-white;
+}
+.nav-item.active {
+  @apply bg-gradient-to-r from-navy-700/80 to-navy-600/40 text-white;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.nav-item.active .nav-icon {
+  @apply text-gold-400;
+}
+
+/* ── Input Styles ──────────────────── */
+.nexabank-input {
+  @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3
+         text-white placeholder-slate-500 text-sm
+         focus:outline-none focus:border-gold-400/50 focus:bg-white/10
+         transition-all duration-200;
+}
+
+/* ── Button Styles ─────────────────── */
+.btn-primary {
+  @apply bg-gradient-to-r from-gold-500 to-gold-400 text-navy-950
+         font-semibold rounded-xl px-6 py-3 text-sm
+         hover:from-gold-400 hover:to-gold-300
+         active:scale-95 transition-all duration-200
+         shadow-glow-gold disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-secondary {
+  @apply bg-white/[0.08] border border-white/10 text-white
+         font-medium rounded-xl px-6 py-3 text-sm
+         hover:bg-white/[0.12] hover:border-white/20
+         active:scale-95 transition-all duration-200;
+}
+
+.btn-danger {
+  @apply bg-red-500/20 border border-red-500/30 text-red-400
+         font-medium rounded-xl px-6 py-3 text-sm
+         hover:bg-red-500/30 active:scale-95 transition-all duration-200;
+}
+
+/* ── Stat Card ─────────────────────── */
+.stat-card {
+  @apply glass rounded-2xl p-5 transition-all duration-300 hover:border-white/15;
+}
+
+/* ── Table ─────────────────────────── */
+.nexabank-table {
+  @apply w-full text-sm;
+}
+.nexabank-table th {
+  @apply text-left text-xs font-medium text-slate-500 uppercase tracking-wider
+         py-3 px-4 border-b border-white/5;
+}
+.nexabank-table td {
+  @apply py-3 px-4 border-b border-white/5 text-slate-300;
+}
+.nexabank-table tr:hover td {
+  @apply bg-white/[0.03];
+}
+
+/* ── Badge ─────────────────────────── */
+.badge {
+  @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+.badge-success { @apply bg-emerald-500/15 text-emerald-400 border border-emerald-500/20; }
+.badge-warning { @apply bg-amber-500/15 text-amber-400 border border-amber-500/20; }
+.badge-danger  { @apply bg-red-500/15 text-red-400 border border-red-500/20; }
+.badge-info    { @apply bg-blue-500/15 text-blue-400 border border-blue-500/20; }
+.badge-neutral { @apply bg-white/[0.08] text-slate-400 border border-white/10; }
+
+/* ── Page Transitions ──────────────── */
+.page-enter { animation: fadeUp 0.4s ease-out; }
