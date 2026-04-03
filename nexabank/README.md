@@ -138,13 +138,12 @@ npm run dev:web
 
 ---
 
-## 🏗️ Tech Stack
+### Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Web Frontend | Next.js 14, React, TypeScript |
+| Web Frontend | Next.js, React, TypeScript |
 | Styling | Tailwind CSS, Framer Motion |
-| Mobile | React Native, Expo |
 | Backend | Node.js, Express |
 | Database | PostgreSQL |
 | Auth | JWT, bcrypt |
