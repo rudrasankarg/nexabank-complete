@@ -1,99 +1,12 @@
-# 🏦 NexaBank — Full-Stack Online Banking System
+# NexaBank — Online Banking System
 
-> A complete, production-ready online banking platform with Web (Next.js), Mobile (React Native/Expo), and Backend (Node.js/Express/PostgreSQL)
-
----
-
-## 📁 Project Structure
-
-```
-nexabank/
-├── web/                    # Next.js 14 Web App (User + Admin)
-│   └── src/
-│       ├── app/
-│       │   ├── page.tsx              # Landing page
-│       │   ├── auth/
-│       │   │   ├── login/            # User login
-│       │   │   ├── register/         # Multi-step registration
-│       │   │   └── forgot-password/  # Password reset
-│       │   ├── dashboard/            # User banking portal
-│       │   │   ├── page.tsx          # Overview & balance
-│       │   │   ├── accounts/         # Account management
-│       │   │   ├── transactions/     # Transaction history
-│       │   │   ├── cards/            # Card management
-│       │   │   ├── transfer/         # Fund transfer with OTP
-│       │   │   ├── bills/            # Bill payments
-│       │   │   ├── loans/            # Loan management
-│       │   │   ├── profile/          # User profile
-│       │   │   └── settings/         # App settings
-│       │   └── admin/                # Admin portal (separate)
-│       │       ├── login/            # Admin-only login
-│       │       ├── dashboard/        # Admin overview
-│       │       ├── users/            # Customer management
-│       │       ├── kyc/              # KYC review & approval
-│       │       ├── transactions/     # Transaction monitoring
-│       │       ├── cards/            # Card management
-│       │       ├── loans/            # Loan approvals
-│       │       └── audit/            # Audit logs
-│       ├── components/               # Reusable UI components
-│       ├── lib/
-│       │   ├── api.ts                # Axios client (user + admin)
-│       │   └── auth-context.tsx      # Auth state management
-│       └── types/                    # TypeScript types
-│
-├── server/                 # Node.js + Express API
-│   └── src/
-│       ├── index.js                  # Server entry point
-│       ├── config/
-│       │   ├── database.js           # PostgreSQL pool
-│       │   ├── redis.js              # Redis cache
-│       │   ├── migrate.js            # DB schema migrations
-│       │   └── seed.js               # Demo data seeder
-│       ├── controllers/
-│       │   ├── auth.controller.js    # Register/login/OTP/reset
-│       │   ├── transaction.controller.js
-│       │   └── card.controller.js
-│       ├── middleware/
-│       │   ├── auth.js               # JWT verify (user + admin)
-│       │   ├── errorHandler.js
-│       │   └── notFound.js
-│       ├── routes/
-│       │   ├── auth.routes.js        # /api/v1/auth/*
-│       │   ├── adminAuth.routes.js   # /api/v1/admin/auth/*
-│       │   ├── account.routes.js
-│       │   ├── transaction.routes.js
-│       │   ├── card.routes.js
-│       │   ├── user.routes.js
-│       │   └── admin.routes.js       # Protected admin routes
-│       └── utils/
-│           ├── audit.js
-│           ├── generators.js
-│           ├── mailer.js
-│           ├── notifications.js
-│           └── sms.js
-│
-└── mobile/                 # React Native + Expo
-    └── src/app/
-        ├── index.tsx                 # Splash screen
-        ├── _layout.tsx               # Root layout
-        ├── auth/login.tsx            # Mobile login
-        └── tabs/
-            ├── _layout.tsx           # Tab bar
-            ├── index.tsx             # Home/Dashboard
-            ├── transactions.tsx      # Transactions
-            ├── transfer.tsx          # Send money
-            ├── cards.tsx             # Card management
-            └── profile.tsx           # Profile & settings
-```
-
----
+> An online banking platform with Web (Next.js) and Backend (Node.js/Express/PostgreSQL).
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Node.js >= 18
 - PostgreSQL >= 14
-- Redis (optional, in-memory fallback available)
 
 ### 1. Clone & Install
 ```bash
@@ -105,30 +18,21 @@ npm install
 
 ### 2. Database Setup
 ```bash
-# Create PostgreSQL database
 createdb nexabank_db
-
-# Run migrations (creates all tables)
 npm run db:migrate
-
-# Seed with demo data
 npm run db:seed
 ```
 
 ### 3. Start Development
 ```bash
-# Start both web and server
-npm run dev
 
-# Or separately:
-npm run dev:server     # API on :5000
-npm run dev:web        # Web on :3000
-npm run dev:mobile     # Expo mobile app
+npm run dev:server     
+npm run dev:web       
 ```
 
 ---
 
-## 🔐 Demo Credentials
+## Demo Credentials
 
 ### User Login (Web & Mobile)
 | Field | Value |
@@ -142,13 +46,9 @@ npm run dev:mobile     # Expo mobile app
 | Employee ID | `EMP-SUPER-001` |
 | Password | `Admin@2024!` |
 
-> ⚠️ **Admin and User logins are completely separate systems with different JWT secrets.**
+> **Admin and User logins are completely separate systems with different JWT secrets.**
 
 ---
-
-## 🌐 API Reference
-
-Base URL: `http://localhost:5000/api/v1`
 
 ### Auth Endpoints
 | Method | Path | Description |
@@ -195,58 +95,46 @@ Base URL: `http://localhost:5000/api/v1`
 
 ---
 
-## ✨ Features
+## Features
 
 ### User Features
-- 🔐 Secure login with email/phone + password
-- 📱 Biometric login on mobile (Face ID / Fingerprint)
-- 🏦 Multiple account types (Savings, Current, Salary, FD, RD)
-- 💳 Debit & Credit card management
-- 💸 Fund transfer (NEFT, IMPS, RTGS, UPI) with OTP
-- 📄 Bill payments (Electricity, Water, DTH, etc.)
-- 📊 Transaction history with filters
-- 🔔 Real-time notifications (Email + SMS + Push)
-- 🎯 KYC document upload
-- 🔒 2-Factor Authentication
-- 🌙 Dark mode support
+-  Secure login with email/phone + password
+-  Biometric login on mobile (Face ID / Fingerprint)
+-  Multiple account types (Savings, Current, Salary, FD, RD)
+-  Debit & Credit card management
+-  Fund transfer (NEFT, IMPS, RTGS, UPI) with OTP
+-  Bill payments (Electricity, Water, DTH, etc.)
+-  Transaction history with filters
+-  Real-time notifications (Email + SMS + Push)
+-  KYC document upload
+-  2-Factor Authentication
+-  Dark mode support
 
 ### Admin Features
-- 👥 Full customer management
-- ✅ KYC review and approval workflow
-- 🚨 Flagged transaction monitoring
-- ❄️ Account freeze/unfreeze
-- 🔑 Role-based access (Super Admin, Branch Manager, CS, Compliance, Auditor)
-- 📈 Real-time dashboard with charts
-- 📋 Complete audit trail
-- 💼 Loan approval workflow
-- 🏢 Branch management
+-  Full customer management
+-  KYC review and approval workflow
+-  Flagged transaction monitoring
+-  Account freeze/unfreeze
+-  Role-based access (Super Admin, Branch Manager, CS, Compliance, Auditor)
+-  Real-time dashboard with charts
+-  Complete audit trail
+-  Loan approval workflow
+-  Branch management
 
 ---
 
-## 🛡️ Security
+##  Security
 
 - JWT with short expiry (15 min) + refresh token rotation
 - Separate JWT secrets for users and admins
-- bcrypt password hashing (12 rounds)
+- bcrypt password hashing
 - Account lockout after 5 failed attempts
-- Token blacklisting on logout (Redis)
 - Transaction OTP verification
 - Rate limiting on all endpoints
 - Helmet.js security headers
 - CORS protection
 - SQL injection prevention (parameterized queries)
 - Audit logging for all critical actions
-
----
-
-## 📱 Mobile App
-
-Built with React Native + Expo:
-- Expo Router for navigation
-- Biometric authentication
-- Push notifications
-- Secure token storage (expo-secure-store)
-- Beautiful native UI with animations
 
 ---
 
@@ -259,15 +147,7 @@ Built with React Native + Expo:
 | Mobile | React Native, Expo |
 | Backend | Node.js, Express |
 | Database | PostgreSQL |
-| Cache | Redis |
 | Auth | JWT, bcrypt |
-| Email | Nodemailer / SendGrid |
-| SMS | Twilio |
-| Charts | Recharts |
-| State | Zustand + TanStack Query |
+| Email | Nodemailer |
 
 ---
-
-## 📄 License
-
-Proprietary — NexaBank © 2024
