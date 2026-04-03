@@ -1,6 +1,6 @@
 const { Pool } = require('pg');
 
-const config = process.env.DATABASE_URL 
+const dbConfig = process.env.DATABASE_URL 
   ? { connectionString: process.env.DATABASE_URL }
   : {
       host: process.env.DB_HOST || 'localhost',
@@ -8,8 +8,12 @@ const config = process.env.DATABASE_URL
       database: process.env.DB_NAME || 'nexabank_db',
       user: process.env.DB_USER || 'nexabank_user',
       password: process.env.DB_PASSWORD,
-      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     };
+
+const config = {
+  ...dbConfig,
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+};
 
 console.log(`[DB] Config: ${JSON.stringify({...config, password: config.password ? '****' : 'MISSING', connectionString: config.connectionString ? config.connectionString.replace(/:[^:@]+@/, ':****@') : undefined})}`);
 

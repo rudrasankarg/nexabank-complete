@@ -403,4 +403,7 @@ async function migrate() {
   }
 }
 
-migrate().catch(() => process.exit(1));
+migrate().catch((err) => {
+  console.error('\n❌ Fatal: Migration script failed to initialize:', err);
+  process.exit(1);
+});
