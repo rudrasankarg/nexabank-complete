@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import '../styles/globals.css';
 import { Providers } from './providers';
@@ -11,13 +11,17 @@ const jakarta = Plus_Jakarta_Sans({
   display: 'swap',
 });
 
+export const viewport: Viewport = {
+  themeColor: '#020817',
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   title: { default: 'NexaBank – Banking Reimagined', template: '%s | NexaBank' },
   description: 'NexaBank – India\'s most trusted digital banking platform. Secure, fast, and beautiful.',
   keywords: ['banking', 'digital bank', 'online banking', 'UPI', 'savings account'],
   authors: [{ name: 'NexaBank' }],
-  themeColor: '#020817',
-  viewport: 'width=device-width, initial-scale=1',
   icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' },
   openGraph: {
     type: 'website',
