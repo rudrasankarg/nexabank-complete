@@ -381,6 +381,13 @@ const migrations = [
   `CREATE INDEX IF NOT EXISTS idx_cards_user_id ON cards(user_id)`,
   `CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)`,
   `CREATE INDEX IF NOT EXISTS idx_audit_actor ON audit_log(actor_id, actor_type)`,
+  
+  // ─── System Settings ──────────────────────────────────────
+  `CREATE TABLE IF NOT EXISTS system_settings (
+    key VARCHAR(50) PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`,
 ];
 
 async function migrate() {
