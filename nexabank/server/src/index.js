@@ -79,7 +79,8 @@ app.use(helmet({
 app.use(cors({
   origin: [
     process.env.APP_URL || 'http://localhost:3000',
-    'http://localhost:19006' // Expo mobile
+    'http://localhost:19006', // Expo mobile
+    /\.vercel\.app$/ // Allow all Vercel deployments
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
