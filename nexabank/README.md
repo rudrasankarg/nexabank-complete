@@ -2,7 +2,7 @@
 
 > An online banking platform with Web (Next.js) and Backend (Node.js/Express/PostgreSQL).
 
-## 🚀 Quick Start
+### Quick Start
 
 ### Prerequisites
 - Node.js >= 18
