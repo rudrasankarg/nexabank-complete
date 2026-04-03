@@ -39,5 +39,9 @@
     "postgresql"
   ],
   "author": "NexaBank Team",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "overrides": {
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  }
 }
