@@ -8,7 +8,9 @@ const transporter = nodemailer.createTransport({
   },
   pool: true, // Use a pool for multiple mails
   maxConnections: 5,
-  maxMessages: 100
+  maxMessages: 100,
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000 // 10 seconds
 });
 
 // ─── SMTP Transporter Verification ───────────────────────

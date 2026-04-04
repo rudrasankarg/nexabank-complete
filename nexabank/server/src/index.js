@@ -96,6 +96,7 @@ app.use(cors({
   origin: [
     process.env.APP_URL || 'http://localhost:3000',
     'http://localhost:19006', // Expo mobile
+    'https://nexabank-complete-iu44iixk2-rudrasankargs-projects.vercel.app', // Explicit prod origin
     /\.vercel\.app$/ // Allow all Vercel deployments
   ],
   credentials: true,
@@ -197,5 +198,16 @@ async function startServer() {
 }
 
 startServer();
+
+// ─── Process Safeguards ───────────────────────────────────
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('CRITICAL: Uncaught Exception:', err.message);
+  console.error(err.stack);
+  // Keep the process alive but log the hell out of it
+});
 
 module.exports = app;

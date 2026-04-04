@@ -219,11 +219,19 @@ async function payBill(req, res) {
       [account_id, req.user.id]
     );
 
-    if (!accountResult.rows.length) return res.status(404).json({ error: 'Account not found' });
+    if (!accountResult.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Account not found' });
+    }
     const account = accountResult.rows[0];
 
-    if (account.is_frozen) return res.status(400).json({ error: 'Account frozen' });
+    if (account.is_frozen) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Account frozen' });
+    }
+    
     if (parseFloat(account.balance) < parseFloat(amount)) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Insufficient balance' });
     }
 
@@ -239,38 +247,47 @@ async function payBill(req, res) {
     );
 
     await client.query('COMMIT');
-
     res.json({ message: 'Bill paid successfully', transaction_ref: txRef, amount, balance: newBalance });
   } catch (err) {
-    await client.query('ROLLBACK');
-    throw err;
+    if (client) await client.query('ROLLBACK');
+    console.error('Bill Payment Error:', err.message);
+    res.status(400).json({ error: err.message || 'Bill payment failed' });
   } finally {
-    client.release();
+    if (client) client.release();
   }
 }
 
 // ─── Request Transaction OTP ─────────────────────────────
 async function requestTransactionOTP(req, res) {
+  console.log(`[OTP] Request started for user: ${req.user.id} (${req.user.email})`);
   try {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
+    console.log(`[OTP] Step 1: Updating database with fresh OTP...`);
     await query(
       `UPDATE users SET phone_otp = $1, phone_otp_expiry = NOW() + INTERVAL '10 minutes' WHERE id = $2`,
       [otp, req.user.id]
     );
+    console.log(`[OTP] Step 1 Success: DB updated.`);
 
     // This log helps in development if email fails
     console.log(`\n💸 [DEMO] Transaction OTP for ${req.user.email}: ${otp}\n`);
 
+    console.log(`[OTP] Step 2: Loading email service...`);
     const { sendEmail } = require('../utils/emailService');
+    
+    console.log(`[OTP] Step 3: Dispatching email via SMTP...`);
     await sendEmail({
       to: req.user.email,
       template: 'otp',
       data: { name: req.user.full_name, otp, type: 'Transaction Verification' }
     });
+    console.log(`[OTP] Step 3 Success: Email delivered.`);
 
     res.json({ message: 'OTP sent successfully' });
   } catch (err) {
+    console.error(`[OTP FATAL ERROR] at ${new Date().toISOString()}:`, err.message);
+    if (err.stack) console.error(err.stack);
     if (process.env.NODE_ENV === 'development') {
       console.warn(`[DEV] Transaction OTP for ${req.user.email} failed via SMTP:`, err.message);
       return res.json({ 
