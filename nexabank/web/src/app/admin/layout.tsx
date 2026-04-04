@@ -102,7 +102,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   const NavItem = ({ href, icon: Icon, label, badge }: any) => {
-    const active = pathname === href || (href !== '/admin/dashboard' && pathname.startsWith(href));
+    const active = pathname === href || (href !== '/admin/dashboard' && pathname?.startsWith(href));
     return (
       <Link href={href} onClick={() => setSidebarOpen(false)}
         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group
