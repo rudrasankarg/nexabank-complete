@@ -21,6 +21,21 @@ const passwordSchema = z.object({
 
 type PwForm = z.infer<typeof passwordSchema>;
 
+const InputField = ({ name, label, show, setShow, register, errors }: { name: any; label: string; show: boolean; setShow: any; register: any; errors: any }) => (
+  <div>
+    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{label}</label>
+    <div className="relative">
+      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      <input {...register(name)} type={show ? 'text' : 'password'}
+        className="w-full pl-10 pr-12 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 transition-all focus:ring-2 focus:ring-brand-500/20 outline-none" />
+      <button type="button" onClick={() => setShow((v: boolean) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+        {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </button>
+    </div>
+    {(errors as any)[name] && <p className="text-red-500 text-[10px] mt-1">{(errors as any)[name]?.message}</p>}
+  </div>
+);
+
 function PasswordSection() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -41,21 +56,6 @@ function PasswordSection() {
     onError: (err: any) => toast.error(err.response?.data?.error || 'Failed to change password'),
   });
 
-  const InputField = ({ name, label, show, setShow }: { name: any; label: string; show: boolean; setShow: any }) => (
-    <div>
-      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{label}</label>
-      <div className="relative">
-        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input {...register(name)} type={show ? 'text' : 'password'}
-          className="w-full pl-10 pr-12 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 transition-all" />
-        <button type="button" onClick={() => setShow((v: boolean) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-          {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-        </button>
-      </div>
-      {(errors as any)[name] && <p className="text-red-500 text-xs mt-1">{(errors as any)[name]?.message}</p>}
-    </div>
-  );
-
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 shadow-sm">
       <div className="flex items-center gap-3 mb-5 pb-5 border-b border-slate-100 dark:border-slate-800">
@@ -68,8 +68,8 @@ function PasswordSection() {
         </div>
       </div>
       <form onSubmit={handleSubmit(data => mutation.mutate(data))} className="space-y-4">
-        <InputField name="current_password" label="Current Password" show={showCurrent} setShow={setShowCurrent} />
-        <InputField name="new_password" label="New Password" show={showNew} setShow={setShowNew} />
+        <InputField name="current_password" label="Current Password" show={showCurrent} setShow={setShowCurrent} register={register} errors={errors} />
+        <InputField name="new_password" label="New Password" show={showNew} setShow={setShowNew} register={register} errors={errors} />
         {newPw && (
           <div>
             <div className="flex gap-1 mb-1">
@@ -82,9 +82,9 @@ function PasswordSection() {
             </p>
           </div>
         )}
-        <InputField name="confirm_password" label="Confirm New Password" show={showConfirm} setShow={setShowConfirm} />
+        <InputField name="confirm_password" label="Confirm New Password" show={showConfirm} setShow={setShowConfirm} register={register} errors={errors} />
         <button type="submit" disabled={mutation.isPending}
-          className="w-full bg-brand-600 text-white py-3 rounded-xl font-semibold hover:bg-brand-700 transition-colors disabled:opacity-50">
+          className="w-full bg-brand-600 text-white py-3 rounded-xl font-semibold hover:bg-brand-700 transition-colors disabled:opacity-50 shadow-md shadow-brand-500/10 active:scale-[0.98] transition-transform">
           {mutation.isPending ? 'Updating...' : 'Update Password'}
         </button>
       </form>
