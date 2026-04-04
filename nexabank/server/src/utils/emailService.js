@@ -102,8 +102,16 @@ async function sendEmail({ to, subject, template, data, html }) {
     console.log(`[MAIL] Delivery Success: ${info.messageId}`);
     return info;
   } catch (err) {
-    console.error('Email Dispatch Error:', err.message);
-    throw err; // Re-throw to allow controller to handle failure
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️  [DEV ONLY] SMTP Delivery failed, logging content below:');
+      console.log(`   To:      ${to}`);
+      console.log(`   Subject: ${subject}`);
+      if (data && data.otp) {
+        console.log(`   OTP:     ${data.otp} (Type: ${data.type || 'Internal'})`);
+      }
+    }
+    console.error('[MAIL] Dispatch ERROR:', err.message);
+    throw err; // Still throw to maintain production behavior
   }
 }
 

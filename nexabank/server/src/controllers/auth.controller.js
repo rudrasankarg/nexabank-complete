@@ -440,6 +440,13 @@ async function sendRegistrationOTP(req, res) {
 
     res.json({ message: 'Verification code sent to your email.' });
   } catch (err) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`[DEV] Registration OTP for ${req.body.email || 'user'} failed to send via SMTP:`, err.message);
+      return res.json({ 
+        message: 'Verification code sent to your email (DEV: See server console for code)',
+        dev_note: 'SMTP failed, but OTP was generated and stored.'
+      });
+    }
     console.error('OTP Send Error:', err.message);
     res.status(500).json({ error: 'Failed to send verification code. Try again later.' });
   }

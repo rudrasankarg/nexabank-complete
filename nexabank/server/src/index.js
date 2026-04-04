@@ -1,16 +1,19 @@
 const path = require('path');
-const rootEnvLocal = path.join(__dirname, '../../.env.local');
-const rootEnv = path.join(__dirname, '../../.env');
-console.log(`[ENV] Loading root .env.local from: ${rootEnvLocal}`);
-const result = require('dotenv').config({ path: rootEnvLocal });
-if (result.error) {
-  console.warn(`[ENV] Warning: Failed to load .env.local: ${result.error.message}`);
-} else {
-  console.log(`[ENV] Successfully loaded .env.local`);
-}
-require('dotenv').config({ path: rootEnv });
-require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const dotenv = require('dotenv');
+
+// ─── Environment Loading ──────────────────────────────────
+// Load root .env files from the project root (relative to server/src/index.js)
+const rootPath = path.join(__dirname, '../../../');
+const serverPath = path.join(__dirname, '../');
+
+console.log(`[ENV] Initializing environment...`);
+console.log(`[ENV] Root path: ${rootPath}`);
+
+dotenv.config({ path: path.join(rootPath, '.env.local') });
+dotenv.config({ path: path.join(rootPath, '.env') });
+dotenv.config({ path: path.join(serverPath, '.env.local') });
+dotenv.config({ path: path.join(serverPath, '.env') });
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
