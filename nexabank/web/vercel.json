@@ -1,17 +1,9 @@
 {
   "version": 2,
-  "name": "nexabank-unified",
   "rewrites": [
     {
       "source": "/api/v1/:path*",
       "destination": "/api/index.js"
     }
-  ],
-  "functions": {
-    "api/index.js": {
-      "runtime": "@vercel/node",
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  }
+  ]
 }
