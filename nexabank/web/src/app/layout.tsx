@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   description: 'NexaBank – India\'s most trusted digital banking platform. Secure, fast, and beautiful.',
   keywords: ['banking', 'digital bank', 'online banking', 'UPI', 'savings account'],
   authors: [{ name: 'NexaBank' }],
-  icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' },
+  icons: { icon: '/favicon.png', apple: '/apple-touch-icon.png' },
   openGraph: {
     type: 'website',
     siteName: 'NexaBank',
