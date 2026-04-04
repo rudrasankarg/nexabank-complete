@@ -30,7 +30,7 @@ const categoryColors: Record<string, string> = {
 
 function TransactionsContent() {
   const searchParams = useSearchParams();
-  const initialAccountId = searchParams.get('account_id') || '';
+  const initialAccountId = searchParams?.get('account_id') || '';
 
   const [search, setSearch] = useState('');
   const [type, setType] = useState('');
