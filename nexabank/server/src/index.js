@@ -35,15 +35,20 @@ async function checkMaintenanceMode(req, res, next) {
                       req.path.includes('/auth/admin') || 
                       req.path.includes('/health');
     
-    if (isExcluded) return next();
-
-    // ─── 🚀 Fast-fail only in Development ───
-    if (!isServerReady && process.env.NODE_ENV === 'development') {
-      return res.status(503).json({ 
-        error: 'System Warming Up', 
-        message: 'The server is still connecting to services. Please try again in 5 seconds.' 
-      });
+    // ─── 🚀 Ensure connections are ready for Serverless ───
+    if (!isServerReady) {
+      console.log('[BOOT] Serverless Warm-up: Connecting to DB...');
+      try {
+        await connectDB();
+        await connectRedis();
+        isServerReady = true;
+      } catch (connErr) {
+        console.error('[BOOT_ERROR]', connErr.message);
+        // Continue anyway, controllers have their own error handling
+      }
     }
+
+    if (isExcluded) return next();
 
     let maintenance = await get('settings:maintenance_mode');
     if (!maintenance) {

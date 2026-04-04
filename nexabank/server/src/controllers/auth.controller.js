@@ -145,92 +145,102 @@ async function register(req, res) {
 
 // ─── Login ───────────────────────────────────────────────
 async function login(req, res) {
-  const { email_or_phone, password, device_id, device_name } = req.body;
+  try {
+    const { email_or_phone, password, device_id, device_name } = req.body;
 
-  const result = await query(
-    `SELECT id, customer_id, full_name, email, phone, password_hash,
-            status, two_factor_enabled, failed_login_attempts, locked_until,
-            email_verified, kyc_status
-     FROM users
-     WHERE email = $1 OR phone = $1`,
-    [email_or_phone.toLowerCase()]
-  );
+    if (!email_or_phone || !password) {
+      return res.status(400).json({ error: 'Credentials are required' });
+    }
 
-  if (!result.rows.length) {
-    console.log(`[LOGIN] Failure: User not found (${email_or_phone})`);
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  const user = result.rows[0];
-
-  // Account lock check
-  if (user.locked_until && new Date(user.locked_until) > new Date()) {
-    const unlockIn = Math.ceil((new Date(user.locked_until) - new Date()) / 60000);
-    return res.status(423).json({ error: `Account locked. Try again in ${unlockIn} minutes.` });
-  }
-
-  if (user.status === 'suspended') {
-    return res.status(403).json({ error: 'Account suspended. Contact support.' });
-  }
-
-  if (user.status === 'closed') {
-    return res.status(403).json({ error: 'Account closed.' });
-  }
-
-  const passwordValid = await bcrypt.compare(password, user.password_hash);
-
-  if (!passwordValid) {
-    console.log(`[LOGIN] Failure: Invalid password for ${email_or_phone}`);
-    const attempts = user.failed_login_attempts + 1;
-    const lockUntil = attempts >= 5 ? new Date(Date.now() + 30 * 60 * 1000) : null;
-
-    await query(
-      `UPDATE users SET failed_login_attempts = $1, locked_until = $2 WHERE id = $3`,
-      [attempts, lockUntil, user.id]
+    const result = await query(
+      `SELECT id, customer_id, full_name, email, phone, password_hash,
+              status, two_factor_enabled, failed_login_attempts, locked_until,
+              email_verified, kyc_status
+       FROM users
+       WHERE email = $1 OR phone = $1`,
+      [email_or_phone.toLowerCase()]
     );
 
-    return res.status(401).json({
-      error: 'Invalid credentials',
-      attempts_remaining: Math.max(0, 5 - attempts)
+    if (!result.rows.length) {
+      console.log(`[LOGIN] Failure: User not found (${email_or_phone})`);
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const user = result.rows[0];
+
+    // Account lock check
+    if (user.locked_until && new Date(user.locked_until) > new Date()) {
+      const unlockIn = Math.ceil((new Date(user.locked_until) - new Date()) / 60000);
+      return res.status(423).json({ error: `Account locked. Try again in ${unlockIn} minutes.` });
+    }
+
+    if (user.status === 'suspended') {
+      return res.status(403).json({ error: 'Account suspended. Contact support.' });
+    }
+
+    const passwordValid = await bcrypt.compare(password, user.password_hash);
+
+    if (!passwordValid) {
+      console.log(`[LOGIN] Failure: Invalid password for ${email_or_phone}`);
+      const attempts = user.failed_login_attempts + 1;
+      const lockUntil = attempts >= 5 ? new Date(Date.now() + 30 * 60 * 1000) : null;
+
+      await query(
+        `UPDATE users SET failed_login_attempts = $1, locked_until = $2 WHERE id = $3`,
+        [attempts, lockUntil, user.id]
+      );
+
+      return res.status(401).json({
+        error: 'Invalid credentials',
+        attempts_remaining: Math.max(0, 5 - attempts)
+      });
+    }
+
+    // Reset failed attempts
+    await query(
+      `UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_login = NOW() WHERE id = $1`,
+      [user.id]
+    );
+
+    const sessionResult = await query(
+      `INSERT INTO refresh_tokens (user_id, token_hash, device_id, device_name, ip_address, expires_at)
+       VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '7 days') RETURNING id`,
+      [user.id, 'temp_hash_' + Date.now(), device_id, device_name || 'Browser Session', req.ip]
+    );
+    const sessionId = sessionResult.rows[0].id;
+
+    const { accessToken, refreshToken } = generateTokens(user.id, sessionId);
+
+    // Store actual refresh token hash
+    const refreshHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    await query(`UPDATE refresh_tokens SET token_hash = $1 WHERE id = $2`, [refreshHash, sessionId]);
+
+    await auditLog({ actorId: user.id, actorType: 'user', action: 'LOGIN', entityType: 'user', entityId: user.id, ip: req.ip });
+
+    res.json({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      token_type: 'Bearer',
+      expires_in: 900,
+      user: {
+        id: user.id,
+        customer_id: user.customer_id,
+        full_name: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        kyc_status: user.kyc_status,
+        email_verified: user.email_verified
+      }
+    });
+
+  } catch (error) {
+    console.error('CRITICAL LOGIN ERROR:', error);
+    res.status(500).json({ 
+      error: 'An unexpected error occurred during login.',
+      debug_error: process.env.NODE_ENV !== 'production' || process.env.DEBUG_ERRORS === 'true' ? error.message : undefined,
+      hint: 'Check database connectivity and environment variables like JWT_SECRET.'
     });
   }
-
-  // Reset failed attempts
-  await query(
-    `UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_login = NOW() WHERE id = $1`,
-    [user.id]
-  );
-
-  const sessionResult = await query(
-    `INSERT INTO refresh_tokens (user_id, token_hash, device_id, device_name, ip_address, expires_at)
-     VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '7 days') RETURNING id`,
-    [user.id, 'temp_hash_' + Date.now(), device_id, device_name || 'Browser Session', req.ip]
-  );
-  const sessionId = sessionResult.rows[0].id;
-
-  const { accessToken, refreshToken } = generateTokens(user.id, sessionId);
-
-  // Store actual refresh token hash
-  const refreshHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-  await query(`UPDATE refresh_tokens SET token_hash = $1 WHERE id = $2`, [refreshHash, sessionId]);
-
-  await auditLog({ actorId: user.id, actorType: 'user', action: 'LOGIN', entityType: 'user', entityId: user.id, ip: req.ip });
-
-  res.json({
-    access_token: accessToken,
-    refresh_token: refreshToken,
-    token_type: 'Bearer',
-    expires_in: 900,
-    user: {
-      id: user.id,
-      customer_id: user.customer_id,
-      full_name: user.full_name,
-      email: user.email,
-      phone: user.phone,
-      kyc_status: user.kyc_status,
-      email_verified: user.email_verified
-    }
-  });
 }
 
 // ─── Refresh Token ───────────────────────────────────────

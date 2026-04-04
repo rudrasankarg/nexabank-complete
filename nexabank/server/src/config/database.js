@@ -10,9 +10,15 @@ const dbConfig = process.env.DATABASE_URL
       password: process.env.DB_PASSWORD,
     };
 
+const isProdDB = process.env.DATABASE_URL && (
+  process.env.DATABASE_URL.includes('neon.tech') || 
+  process.env.DATABASE_URL.includes('supabase.com') ||
+  process.env.DATABASE_URL.includes('amazonaws.com')
+);
+
 const config = {
   ...dbConfig,
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  ssl: (process.env.DB_SSL === 'true' || isProdDB) ? { rejectUnauthorized: false } : false,
 };
 
 console.log(`[DB] Config: ${JSON.stringify({...config, password: config.password ? '****' : 'MISSING', connectionString: config.connectionString ? config.connectionString.replace(/:[^:@]+@/, ':****@') : undefined})}`);

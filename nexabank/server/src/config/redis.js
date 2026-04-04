@@ -7,8 +7,9 @@ async function connectRedis() {
     url: process.env.REDIS_URL || 'redis://localhost:6379',
     password: process.env.REDIS_PASSWORD || undefined,
     socket: {
+      connectTimeoutMS: 5000,
       reconnectStrategy: (retries) => {
-        if (retries > 5) return new Error('Redis max retries exceeded');
+        if (retries > 3) return new Error('Redis max retries exceeded');
         return Math.min(retries * 100, 3000);
       }
     }
