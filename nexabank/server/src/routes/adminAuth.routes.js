@@ -85,10 +85,11 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('[ADMIN_LOGIN_ERROR]', error);
+    const visibleKeys = Object.keys(process.env).filter(k => k.includes('JWT') || k.includes('SECRET') || k.includes('ADMIN'));
     res.status(500).json({ 
       error: 'An unexpected error occurred during admin login.',
-      debug_error: process.env.NODE_ENV !== 'production' || process.env.DEBUG_ERRORS === 'true' ? error.message : undefined,
-      hint: 'Check if ADMIN_JWT_SECRET is set in Vercel environment variables.'
+      debug_error: error.message,
+      hint: `Vercel is only sending these keys: [${visibleKeys.join(', ')}]. Is ADMIN_JWT_SECRET in that list?`
     });
   }
 });
