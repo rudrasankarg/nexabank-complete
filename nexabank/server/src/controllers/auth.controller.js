@@ -10,14 +10,21 @@ const { generateCustomerId, generateAccountNumber } = require('../utils/generato
 const { auditLog } = require('../utils/audit');
 
 // ─── Helper: Generate Tokens ─────────────────────────────
-function generateTokens(userId) {
+function generateTokens(userId, sessionId = null) {
+  const payload = { userId, type: 'user' };
+  if (sessionId) payload.sessionId = sessionId;
+
   const accessToken = jwt.sign(
-    { userId, type: 'user' },
+    payload,
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
   );
+
+  const refreshPayload = { userId, type: 'refresh' };
+  if (sessionId) refreshPayload.sessionId = sessionId;
+
   const refreshToken = jwt.sign(
-    { userId, type: 'refresh' },
+    refreshPayload,
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
   );
@@ -194,15 +201,18 @@ async function login(req, res) {
     [user.id]
   );
 
-  const { accessToken, refreshToken } = generateTokens(user.id);
-
-  // Store refresh token
-  const refreshHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-  await query(
+  const sessionResult = await query(
     `INSERT INTO refresh_tokens (user_id, token_hash, device_id, device_name, ip_address, expires_at)
-     VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '7 days')`,
-    [user.id, refreshHash, device_id, device_name, req.ip]
+     VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '7 days') RETURNING id`,
+    [user.id, 'temp_hash_' + Date.now(), device_id, device_name || 'Browser Session', req.ip]
   );
+  const sessionId = sessionResult.rows[0].id;
+
+  const { accessToken, refreshToken } = generateTokens(user.id, sessionId);
+
+  // Store actual refresh token hash
+  const refreshHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+  await query(`UPDATE refresh_tokens SET token_hash = $1 WHERE id = $2`, [refreshHash, sessionId]);
 
   await auditLog({ actorId: user.id, actorType: 'user', action: 'LOGIN', entityType: 'user', entityId: user.id, ip: req.ip });
 

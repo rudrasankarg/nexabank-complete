@@ -12,11 +12,24 @@ async function authenticate(req, res, next) {
 
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { sessionId } = decoded;
 
-    // Check if token is blacklisted (logout)
+    // Check if token is blacklisted (explicit logout)
     const blacklisted = await get(`blacklist:${token}`);
     if (blacklisted) {
       return res.status(401).json({ error: 'Token has been revoked' });
+    }
+
+    // NEW: Session Verification (Immediate Logout Support)
+    if (sessionId) {
+      const sessionResult = await query(
+        `SELECT id FROM refresh_tokens 
+         WHERE id = $1 AND user_id = $2 AND is_revoked = false AND expires_at > NOW()`,
+        [sessionId, decoded.userId]
+      );
+      if (!sessionResult.rows.length) {
+        return res.status(401).json({ error: 'Session has been terminated', code: 'SESSION_REVOKED' });
+      }
     }
 
     // Fetch user
@@ -32,6 +45,7 @@ async function authenticate(req, res, next) {
     }
 
     req.user = result.rows[0];
+    req.user.sessionId = sessionId;
     req.token = token;
     next();
   } catch (err) {

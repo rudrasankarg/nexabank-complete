@@ -57,21 +57,28 @@ router.post('/change-password', async (req, res) => {
   res.json({ message: 'Password changed successfully' });
 });
 
-// Update notification preferences
+// Update security preferences (mostly 2FA)
 router.patch('/notifications/preferences', async (req, res) => {
   const { '2fa': twoFactor, ...prefs } = req.body;
   
-  if (twoFactor !== undefined) {
-    await query(`UPDATE users SET two_factor_enabled = $1 WHERE id = $2`, [twoFactor, req.user.id]);
-  }
+  try {
+    if (twoFactor !== undefined) {
+      await query(`UPDATE users SET two_factor_enabled = $1 WHERE id = $2`, [twoFactor, req.user.id]);
+    }
 
-  if (Object.keys(prefs).length > 0) {
-    await query(
-      `UPDATE users SET notification_preferences = COALESCE(notification_preferences, '{}'::jsonb) || $1::jsonb WHERE id = $2`,
-      [JSON.stringify(prefs), req.user.id]
-    );
+    if (Object.keys(prefs).length > 0) {
+      await query(
+        `UPDATE users SET notification_preferences = COALESCE(notification_preferences, '{}'::jsonb) || $1::jsonb WHERE id = $2`,
+        [JSON.stringify(prefs), req.user.id]
+      );
+    }
+    
+    await auditLog({ actorId: req.user.id, actorType: 'user', action: 'SECURITY_UPDATE', ip: req.ip });
+    res.json({ message: 'Security preferences updated successfully' });
+  } catch (err) {
+    console.error('Security Update Error:', err.message);
+    res.status(500).json({ error: 'Failed to update security preferences' });
   }
-  res.json({ message: 'Preferences updated successfully' });
 });
 
 // Sessions management
@@ -83,7 +90,12 @@ router.get('/sessions', async (req, res) => {
      ORDER BY last_used_at DESC`,
     [req.user.id]
   );
-  res.json({ sessions: result.rows });
+  
+  // Return sessions along with the ID of the current one from the token
+  res.json({ 
+    sessions: result.rows,
+    current_session_id: req.user.sessionId 
+  });
 });
 
 router.delete('/sessions/:id', async (req, res) => {
@@ -91,26 +103,29 @@ router.delete('/sessions/:id', async (req, res) => {
     `UPDATE refresh_tokens SET is_revoked = true WHERE id = $1 AND user_id = $2`,
     [req.params.id, req.user.id]
   );
-  res.json({ message: 'Session terminated' });
+  
+  await auditLog({ actorId: req.user.id, actorType: 'user', action: 'SESSION_REVOKE', entityId: req.params.id, ip: req.ip });
+  res.json({ message: 'Session terminated successfully' });
 });
 
 router.delete('/sessions/all/others', async (req, res) => {
-  // To identify "others", we usually need the current refresh token's hash
-  // But for simplicity, we can just revoke all and let the user re-login if needed
-  // Or better: req.body.current_token_hash
-  const { current_session_id } = req.body;
-  if (current_session_id) {
+  const currentId = req.body.current_session_id || req.user.sessionId;
+  
+  if (currentId) {
     await query(
       `UPDATE refresh_tokens SET is_revoked = true WHERE user_id = $1 AND id != $2`,
-      [req.user.id, current_session_id]
+      [req.user.id, currentId]
     );
   } else {
+    // Should not happen with new session logic, but fallback:
     await query(
       `UPDATE refresh_tokens SET is_revoked = true WHERE user_id = $1`,
       [req.user.id]
     );
   }
-  res.json({ message: 'Other sessions terminated' });
+  
+  await auditLog({ actorId: req.user.id, actorType: 'user', action: 'SESSION_REVOKE_ALL', ip: req.ip });
+  res.json({ message: 'All other sessions terminated' });
 });
 
 // Update profile photo

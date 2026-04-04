@@ -121,10 +121,16 @@ export default function BillsPage() {
                 <div className="space-y-3">
                   {recentBills.map((tx: any) => (
                     <button key={tx.transaction_ref} onClick={() => {
-                      selectCategory(tx.bill_type);
-                      setValue('operator', tx.description.split(' ')[0]);
-                      setValue('bill_reference', tx.bill_reference);
-                      setValue('amount', Number(tx.amount));
+                      const foundType = tx.bill_type?.toLowerCase() || 'electricity';
+                      const exists = billCategories.some(c => c.id === foundType);
+                      const finalType = exists ? foundType : 'electricity';
+                      
+                      selectCategory(finalType);
+                      // Fallback for description/operator parsing
+                      const descParts = tx.description?.split(' ') || [];
+                      setValue('operator', descParts[0] || '');
+                      setValue('bill_reference', tx.bill_reference || '');
+                      setValue('amount', Number(tx.amount) || 0);
                     }}
                       className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-50 dark:border-slate-800 hover:border-brand-100 dark:hover:border-brand-900 group transition-all">
                       <div className="flex items-center gap-3">

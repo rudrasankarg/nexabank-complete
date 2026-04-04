@@ -123,6 +123,7 @@ export default function SecurityPage() {
 
   const profile = profileData?.user;
   const sessions = sessionData?.sessions || [];
+  const currentSessionId = sessionData?.current_session_id;
   const twoFAEnabled = profile?.two_factor_enabled || false;
 
   return (
@@ -175,7 +176,7 @@ export default function SecurityPage() {
         {!twoFAEnabled ? (
           <div className="flex items-start gap-3 text-slate-500">
             <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
-            <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">2FA is disabled. Enable it to secure your account with an authenticator app like Google Authenticator or Authy.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">2FA is disabled. Enable it to secure your account with an authenticator app like Google Authenticator or Authy.</p>
           </div>
         ) : (
           <div className="text-center py-4 space-y-3">
@@ -201,12 +202,12 @@ export default function SecurityPage() {
         </div>
         <div className="space-y-3">
           {sessionsLoading ? (
-             <div className="space-y-3">{[...Array(2)].map((_, i) => <div key={i} className="h-16 bg-slate-50 dark:bg-slate-800 rounded-xl shimmer" />)}</div>
+             <div className="space-y-3">{[...Array(2)].map((_, i) => <div key={i} className="h-16 bg-slate-50 dark:bg-slate-800 rounded-xl animate-pulse" />)}</div>
           ) : sessions.length === 0 ? (
             <p className="text-center text-slate-400 text-sm py-4">No active sessions found.</p>
           ) : (
             sessions.map((session: any) => {
-              const isCurrent = session.id === sessions[0].id;
+              const isCurrent = session.id === currentSessionId;
               return (
                 <div key={session.id} className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 hover:border-slate-200 dark:hover:border-slate-600 transition-all group">
                   <div className="w-10 h-10 bg-white dark:bg-slate-700 rounded-xl flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
@@ -232,7 +233,7 @@ export default function SecurityPage() {
             })
           )}
         </div>
-        <button onClick={() => deleteAllOthersMutation.mutate(sessions[0]?.id)} disabled={deleteAllOthersMutation.isPending || sessions.length <= 1}
+        <button onClick={() => deleteAllOthersMutation.mutate(currentSessionId)} disabled={deleteAllOthersMutation.isPending || sessions.length <= 1}
           className="w-full mt-4 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors border border-red-200 dark:border-red-800 disabled:opacity-50">
           {deleteAllOthersMutation.isPending ? 'Processing...' : 'Sign Out All Other Sessions'}
         </button>
