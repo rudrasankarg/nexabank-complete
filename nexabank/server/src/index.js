@@ -163,13 +163,16 @@ app.use(notFound);
 app.use(errorHandler);
 
 // ─── Boot ──────────────────────────────────────────────────
+// ─── Boot ──────────────────────────────────────────────────
 async function startServer() {
-  // ─── 🚀 Immediate Listen (Prevents 30s CORS/OPTIONS hangs) ───
-  const server = app.listen(PORT, () => {
-    console.log(`\n🏦 NexaBank API Server listening on port ${PORT}`);
-    console.log(`   Environment: ${process.env.NODE_ENV}`);
-    console.log(`   API Base:    http://localhost:${PORT}/api/v1\n`);
-  });
+  // 🚀 Start listener ONLY if not in a serverless environment (Vercel)
+  if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    const server = app.listen(PORT, () => {
+      console.log(`\n🏦 NexaBank API Server listening on port ${PORT}`);
+      console.log(`   Environment: ${process.env.NODE_ENV}`);
+      console.log(`   API Base:    http://localhost:${PORT}/api/v1\n`);
+    });
+  }
 
   try {
     // ─── Background Initializations ───
@@ -179,35 +182,38 @@ async function startServer() {
       await connectDB();
       console.log('✅ PostgreSQL connected');
     } catch (dbError) {
-      if (process.env.NODE_ENV === 'production') {
+      if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
         console.error('❌ DB connection failed (fatal in production):', dbError.message);
         process.exit(1);
       }
-      console.warn('⚠️  PostgreSQL unavailable, running in fallback mode:', dbError.message);
+      console.warn('⚠️  PostgreSQL unavailable or lazy-loading:', dbError.message);
     }
 
     await connectRedis();
     console.log('✅ Redis connected (or using fallback)');
 
     isServerReady = true;
-    console.log('✨ [READY] System warming complete. Global services initialized.');
+    console.log('✨ [READY] System warming complete.');
 
   } catch (error) {
     console.error('❌ Server background startup failed:', error.message);
   }
 }
 
+// In Vercel, we don't call startServer() top-level at the same time as listen
+// But we DO need the DB connection.
 startServer();
 
-// ─── Process Safeguards ───────────────────────────────────
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
-});
+// ─── Process Safeguards (Only for long-running processes) ───
+if (!process.env.VERCEL) {
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
+  });
 
-process.on('uncaughtException', (err) => {
-  console.error('CRITICAL: Uncaught Exception:', err.message);
-  console.error(err.stack);
-  // Keep the process alive but log the hell out of it
-});
+  process.on('uncaughtException', (err) => {
+    console.error('CRITICAL: Uncaught Exception:', err.message);
+    if (err.stack) console.error(err.stack);
+  });
+}
 
 module.exports = app;
