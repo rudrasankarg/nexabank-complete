@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 const { query } = require('../config/database');
-const { setex, get, del } = require('../config/redis');
+const { setEx, get, del } = require('../config/redis');
 const { sendEmail } = require('../utils/emailService');
 const { sendSMS } = require('../utils/sms');
 const { generateCustomerId, generateAccountNumber } = require('../utils/generators');
@@ -33,7 +33,7 @@ async function register(req, res) {
       return res.status(400).json({ error: 'Email and OTP are required' });
     }
 
-    // 🔴 Mandatory Email Verification Check (No Demo Bypasses)
+    // Mandatory Email Verification Check
     const storedOtp = await get(`reg_otp:${email.toLowerCase()}`);
     if (!storedOtp || storedOtp !== email_otp) {
       return res.status(401).json({ error: 'Invalid or expired verification code. Please request a new one.' });
@@ -265,7 +265,7 @@ async function logout(req, res) {
   const decoded = jwt.decode(token);
   const ttl = Math.max(0, decoded.exp - Math.floor(Date.now() / 1000));
 
-  await setex(`blacklist:${token}`, ttl, '1');
+  await setEx(`blacklist:${token}`, ttl, '1');
 
   const { refresh_token } = req.body;
   if (refresh_token) {
@@ -430,7 +430,7 @@ async function sendRegistrationOTP(req, res) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     console.log(`\n📧 [DEMO] OTP for ${email}: ${otp}\n`);
     
-    await setex(`reg_otp:${email.toLowerCase()}`, 300, otp); // 5 mins
+    await setEx(`reg_otp:${email.toLowerCase()}`, 300, otp); // 5 mins
 
     await sendEmail({
       to: email,
