@@ -27,6 +27,8 @@ const errorHandler = require('./middleware/errorHandler');
 const notFound = require('./middleware/notFound');
 
 // ─── Maintenance Guard ────────────────────────────────────
+let isServerReady = false;
+
 async function checkMaintenanceMode(req, res, next) {
   try {
     const isExcluded = req.path.includes('/admin') || 
@@ -35,13 +37,21 @@ async function checkMaintenanceMode(req, res, next) {
     
     if (isExcluded) return next();
 
+    // Fast-fail if server is still warming up (prevents hanging queries)
+    if (!isServerReady) {
+      return res.status(503).json({ 
+        error: 'System Warming Up', 
+        message: 'The server is still connecting to services. Please try again in 5 seconds.' 
+      });
+    }
+
     let maintenance = await get('settings:maintenance_mode');
     if (!maintenance) {
       const result = await query(`SELECT value FROM system_settings WHERE key = 'maintenance_mode'`);
       maintenance = result.rows[0]?.value || { enabled: false };
       await setEx('settings:maintenance_mode', 60, JSON.stringify(maintenance));
     } else {
-      maintenance = JSON.parse(maintenance);
+      maintenance = typeof maintenance === 'string' ? JSON.parse(maintenance) : maintenance;
     }
 
     if (maintenance.enabled) {
@@ -153,7 +163,17 @@ app.use(errorHandler);
 
 // ─── Boot ──────────────────────────────────────────────────
 async function startServer() {
+  // ─── 🚀 Immediate Listen (Prevents 30s CORS/OPTIONS hangs) ───
+  const server = app.listen(PORT, () => {
+    console.log(`\n🏦 NexaBank API Server listening on port ${PORT}`);
+    console.log(`   Environment: ${process.env.NODE_ENV}`);
+    console.log(`   API Base:    http://localhost:${PORT}/api/v1\n`);
+  });
+
   try {
+    // ─── Background Initializations ───
+    console.log('[BOOT] Connecting to services...');
+
     try {
       await connectDB();
       console.log('✅ PostgreSQL connected');
@@ -162,21 +182,17 @@ async function startServer() {
         console.error('❌ DB connection failed (fatal in production):', dbError.message);
         process.exit(1);
       }
-      console.warn('⚠️  PostgreSQL unavailable, running without DB (dev mode):', dbError.message);
+      console.warn('⚠️  PostgreSQL unavailable, running in fallback mode:', dbError.message);
     }
 
     await connectRedis();
-    console.log('✅ Redis connected (or using in-memory fallback)');
+    console.log('✅ Redis connected (or using fallback)');
 
-    app.listen(PORT, () => {
-      console.log(`\n🏦 NexaBank API Server running`);
-      console.log(`   Port:        ${PORT}`);
-      console.log(`   Environment: ${process.env.NODE_ENV}`);
-      console.log(`   API Base:    http://localhost:${PORT}/api/v1\n`);
-    });
+    isServerReady = true;
+    console.log('✨ [READY] System warming complete. Global services initialized.');
+
   } catch (error) {
-    console.error('❌ Server startup failed:', error.message);
-    process.exit(1);
+    console.error('❌ Server background startup failed:', error.message);
   }
 }
 
