@@ -295,8 +295,10 @@ async function requestTransactionOTP(req, res) {
         dev_note: 'SMTP failed, but OTP was generated.'
       });
     }
-    console.error('[OTP ERROR]', err.message);
-    res.status(500).json({ error: 'Failed to send OTP. Please try again later.' });
+    res.status(500).json({ 
+      error: `Failed to send OTP: ${err.message}`, 
+      hint: 'Verify SMTP_USER and SMTP_PASS (App Password) environment variables in Render.'
+    });
   }
 }
 
