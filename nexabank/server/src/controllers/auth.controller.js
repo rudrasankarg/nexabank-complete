@@ -324,7 +324,7 @@ async function forgotPassword(req, res) {
     to: user.email,
     subject: 'NexaBank – Password Reset Request',
     template: 'password-reset',
-    data: { name: user.full_name, resetLink: `${process.env.APP_URL}/reset-password?token=${resetToken}`, expiry: '10 minutes' }
+    data: { name: user.full_name, resetLink: `${process.env.APP_URL}/auth/reset-password?token=${resetToken}`, expiry: '10 minutes' }
   });
 
   res.json({ message: 'If the account exists, a reset link has been sent.' });
