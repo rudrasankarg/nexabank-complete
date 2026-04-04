@@ -119,12 +119,16 @@ async function sendEmail({ to, subject, template, data, html }) {
     console.log(`[MAIL] Delivery Success: ${info.messageId}`);
     return info;
   } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('⚠️  [DEV ONLY] SMTP Delivery failed:');
-      console.log(`   To:      ${to} | OTP: ${data?.otp || 'N/A'}`);
+    // ─── 📡 Production Rescue Log ───
+    // If SMTP fails, we ALWAYS log the OTP to the console as a last resort.
+    // This allows you to find the code in your Render/Vercel dashboard logs.
+    if (data && data.otp) {
+      console.log('\n' + '!'.repeat(50));
+      console.log(`📡 [MAIL_FAIL_RESCUE] To: ${to} | OTP: ${data.otp}`);
+      console.log('!'.repeat(50) + '\n');
     }
     console.error('[MAIL] Dispatch ERROR:', err.message);
-    throw err; // Still throw to maintain production behavior
+    throw err;
   }
 }
 

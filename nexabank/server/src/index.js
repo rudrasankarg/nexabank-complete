@@ -37,8 +37,8 @@ async function checkMaintenanceMode(req, res, next) {
     
     if (isExcluded) return next();
 
-    // Fast-fail if server is still warming up (prevents hanging queries)
-    if (!isServerReady) {
+    // ─── 🚀 Fast-fail only in Development ───
+    if (!isServerReady && process.env.NODE_ENV === 'development') {
       return res.status(503).json({ 
         error: 'System Warming Up', 
         message: 'The server is still connecting to services. Please try again in 5 seconds.' 
