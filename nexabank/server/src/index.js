@@ -2,17 +2,14 @@ const path = require('path');
 const dotenv = require('dotenv');
 
 // ─── Environment Loading ──────────────────────────────────
-// Load root .env files from the project root (relative to server/src/index.js)
-const rootPath = path.join(__dirname, '../../../');
-const serverPath = path.join(__dirname, '../');
-
-console.log(`[ENV] Initializing environment...`);
-console.log(`[ENV] Root path: ${rootPath}`);
-
-dotenv.config({ path: path.join(rootPath, '.env.local') });
-dotenv.config({ path: path.join(rootPath, '.env') });
-dotenv.config({ path: path.join(serverPath, '.env.local') });
-dotenv.config({ path: path.join(serverPath, '.env') });
+if (!process.env.VERCEL) {
+  const rootPath = path.join(__dirname, '../../../');
+  const serverPath = path.join(__dirname, '../');
+  dotenv.config({ path: path.join(rootPath, '.env.local') });
+  dotenv.config({ path: path.join(rootPath, '.env') });
+  dotenv.config({ path: path.join(serverPath, '.env.local') });
+  dotenv.config({ path: path.join(serverPath, '.env') });
+}
 
 const express = require('express');
 const cors = require('cors');
