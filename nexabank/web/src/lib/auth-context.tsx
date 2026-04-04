@@ -4,7 +4,9 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const API_URL = (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes('localhost'))
+  ? process.env.NEXT_PUBLIC_API_URL
+  : (process.env.NODE_ENV === 'production' || process.env.VERCEL ? '/api/v1' : 'http://localhost:5000/api/v1');
 
 export const api = axios.create({ baseURL: API_URL, timeout: 15000 });
 
