@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { query } = require('../config/database');
-const { get } = require('../config/redis');
+const { get, setEx } = require('../config/redis');
 
 // ─── User Authentication ──────────────────────────────────
 async function authenticate(req, res, next) {
@@ -20,14 +20,22 @@ async function authenticate(req, res, next) {
       return res.status(401).json({ error: 'Token has been revoked' });
     }
 
-    // NEW: Session Verification (Immediate Logout Support)
+    // NEW: Session Verification with Redis Caching
     if (sessionId) {
-      const sessionResult = await query(
-        `SELECT id FROM refresh_tokens 
-         WHERE id = $1 AND user_id = $2 AND is_revoked = false AND expires_at > NOW()`,
-        [sessionId, decoded.userId]
-      );
-      if (!sessionResult.rows.length) {
+      const cacheKey = `session:active:${sessionId}`;
+      let isSessionValid = await get(cacheKey);
+
+      if (isSessionValid === null) {
+        const sessionResult = await query(
+          `SELECT id FROM refresh_tokens 
+           WHERE id = $1 AND user_id = $2 AND is_revoked = false AND expires_at > NOW()`,
+          [sessionId, decoded.userId]
+        );
+        isSessionValid = sessionResult.rows.length > 0;
+        await setEx(cacheKey, 60, isSessionValid.toString());
+      }
+
+      if (isSessionValid === 'false' || isSessionValid === false) {
         return res.status(401).json({ error: 'Session has been terminated', code: 'SESSION_REVOKED' });
       }
     }
@@ -69,9 +77,30 @@ async function authenticateAdmin(req, res, next) {
 
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET);
+    const { sessionId } = decoded;
 
     if (decoded.type !== 'admin') {
       return res.status(403).json({ error: 'Invalid admin token' });
+    }
+
+    // NEW: Admin Session Verification with Caching
+    if (sessionId) {
+      const cacheKey = `session:active:${sessionId}`;
+      let isSessionValid = await get(cacheKey);
+
+      if (isSessionValid === null) {
+        const sessionResult = await query(
+          `SELECT id FROM refresh_tokens 
+           WHERE id = $1 AND user_id = $2 AND is_revoked = false AND expires_at > NOW()`,
+          [sessionId, decoded.adminId]
+        );
+        isSessionValid = sessionResult.rows.length > 0;
+        await setEx(cacheKey, 60, isSessionValid.toString());
+      }
+
+      if (isSessionValid === 'false' || isSessionValid === false) {
+        return res.status(401).json({ error: 'Admin session terminated' });
+      }
     }
 
     const result = await query(
@@ -85,6 +114,7 @@ async function authenticateAdmin(req, res, next) {
     }
 
     req.admin = result.rows[0];
+    req.admin.sessionId = sessionId;
     req.token = token;
     next();
   } catch (err) {

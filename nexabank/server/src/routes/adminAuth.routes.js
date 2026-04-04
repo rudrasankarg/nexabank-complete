@@ -44,8 +44,16 @@ router.post('/login', async (req, res) => {
     [admin.id]
   );
 
+  // ─── NEW: Create physical Admin Session ───
+  const sessionResult = await query(
+    `INSERT INTO refresh_tokens (user_id, token_hash, device_id, device_name, ip_address, expires_at)
+     VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '7 days') RETURNING id`,
+    [admin.id, 'temp_hash_' + Date.now(), req.headers['x-device-id'] || 'admin-api', 'Admin Portal', req.ip]
+  );
+  const sessionId = sessionResult.rows[0].id;
+
   const token = jwt.sign(
-    { adminId: admin.id, role: admin.role, type: 'admin' },
+    { adminId: admin.id, role: admin.role, type: 'admin', sessionId },
     process.env.ADMIN_JWT_SECRET,
     { expiresIn: process.env.ADMIN_JWT_EXPIRES_IN || '8h' }
   );
@@ -56,6 +64,7 @@ router.post('/login', async (req, res) => {
     access_token: token,
     token_type: 'Bearer',
     expires_in: 28800,
+    sessionId,
     admin: {
       id: admin.id,
       employee_id: admin.employee_id,

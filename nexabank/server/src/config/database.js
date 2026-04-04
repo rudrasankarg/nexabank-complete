@@ -19,9 +19,9 @@ console.log(`[DB] Config: ${JSON.stringify({...config, password: config.password
 
 const pool = new Pool({
   ...config,
-  max: 20,
+  max: 50,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000
+  connectionTimeoutMillis: 5000
 });
 
 pool.on('error', (err) => {
