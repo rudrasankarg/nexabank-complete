@@ -54,9 +54,13 @@ async function del(key) {
   await client.del(key);
 }
 
-async function exists(key) {
-  if (!client) return memStore.has(key);
-  return await client.exists(key);
+async function flushAll() {
+  if (!client) {
+    memStore.clear();
+    console.log('[REDIS] In-memory cache cleared');
+    return;
+  }
+  await client.flushAll();
 }
 
-module.exports = { connectRedis, setEx, get, del, exists };
+module.exports = { connectRedis, setEx, get, del, exists, flushAll };

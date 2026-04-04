@@ -22,19 +22,34 @@ async function getCards(req, res) {
 
 // ─── Request Card OTP ────────────────────────────────────
 async function requestCardOTP(req, res) {
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  await query(
-    `UPDATE users SET phone_otp = $1, phone_otp_expiry = NOW() + INTERVAL '10 minutes' WHERE id = $2`,
-    [otp, req.user.id]
-  );
+  try {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    await query(
+      `UPDATE users SET phone_otp = $1, phone_otp_expiry = NOW() + INTERVAL '10 minutes' WHERE id = $2`,
+      [otp, req.user.id]
+    );
 
-  await sendEmail({
-    to: req.user.email,
-    template: 'otp',
-    data: { name: req.user.full_name, otp, type: 'Card Application' }
-  });
+    // This log helps in development if email fails
+    console.log(`\n💳 [DEMO] Card Application OTP for ${req.user.email}: ${otp}\n`);
 
-  res.json({ message: 'Verification code sent to your email' });
+    await sendEmail({
+      to: req.user.email,
+      template: 'otp',
+      data: { name: req.user.full_name, otp, type: 'Card Application' }
+    });
+
+    res.json({ message: 'Verification code sent to your email' });
+  } catch (err) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`[DEV] Card OTP for ${req.user.email} failed via SMTP:`, err.message);
+      return res.json({ 
+        message: 'Verification code sent (DEV: Check server console)',
+        dev_note: 'SMTP failed, but OTP was generated.'
+      });
+    }
+    console.error('Card OTP Error:', err.message);
+    res.status(500).json({ error: 'Failed to send verification code. Try again later.' });
+  }
 }
 
 // ─── Apply for New Card ──────────────────────────────────

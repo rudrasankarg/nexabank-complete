@@ -253,12 +253,14 @@ async function payBill(req, res) {
 async function requestTransactionOTP(req, res) {
   try {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log(`[OTP] Generating for ${req.user.email}: ${otp}`);
     
     await query(
       `UPDATE users SET phone_otp = $1, phone_otp_expiry = NOW() + INTERVAL '10 minutes' WHERE id = $2`,
       [otp, req.user.id]
     );
+
+    // This log helps in development if email fails
+    console.log(`\n💸 [DEMO] Transaction OTP for ${req.user.email}: ${otp}\n`);
 
     const { sendEmail } = require('../utils/emailService');
     await sendEmail({
@@ -269,8 +271,15 @@ async function requestTransactionOTP(req, res) {
 
     res.json({ message: 'OTP sent successfully' });
   } catch (err) {
-    console.error('[OTP ERROR]', err);
-    res.status(500).json({ error: 'Failed to send OTP. Please check your connection or try later.' });
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`[DEV] Transaction OTP for ${req.user.email} failed via SMTP:`, err.message);
+      return res.json({ 
+        message: 'OTP sent (DEV: Check server console)',
+        dev_note: 'SMTP failed, but OTP was generated.'
+      });
+    }
+    console.error('[OTP ERROR]', err.message);
+    res.status(500).json({ error: 'Failed to send OTP. Please try again later.' });
   }
 }
 
