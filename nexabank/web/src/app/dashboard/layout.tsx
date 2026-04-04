@@ -42,7 +42,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   const NavLink = ({ href, icon: Icon, label }: { href: string; icon: any; label: string }) => {
-    const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
+    const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href));
     return (
       <Link href={href} onClick={() => setSidebarOpen(false)}
         className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all group
@@ -135,7 +135,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
           <div className="flex-1">
             <h1 className="font-semibold text-slate-900 dark:text-white text-lg">
-              {navItems.concat(bottomNav).find(n => pathname === n.href || (n.href !== '/dashboard' && pathname.startsWith(n.href)))?.label || 'Dashboard'}
+              {navItems.concat(bottomNav).find(n => pathname === n.href || (n.href !== '/dashboard' && pathname?.startsWith(n.href)))?.label || 'Dashboard'}
             </h1>
             <p className="text-xs text-slate-400 hidden sm:block">Welcome back, {user?.full_name?.split(' ')[0]}</p>
           </div>
