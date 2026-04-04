@@ -85,6 +85,14 @@ const templates = {
 };
 
 async function sendEmail({ to, subject, template, data, html }) {
+  // ─── Development Fast-OTP ────────────────────────────────
+  // In development, if an OTP is being sent, log it and return IMMEDIATELY
+  // to avoid 30s timeouts when SMTP is blocked or slow (Gmail).
+  if (process.env.NODE_ENV === 'development' && data && data.otp) {
+    console.log(`\n📬 [DEV_FAST_OTP] to: ${to} | OTP: ${data.otp}\n`);
+    return { messageId: 'dev-mock-id-' + Date.now() };
+  }
+
   console.log(`[MAIL] Dispatching to ${to} using Gmail Service`);
   try {
     const templateData = (template && templates[template]) ? templates[template](data) : null;
