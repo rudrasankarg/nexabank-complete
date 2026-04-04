@@ -9,10 +9,6 @@ if (!process.env.VERCEL) {
   dotenv.config({ path: path.join(rootPath, '.env') });
   dotenv.config({ path: path.join(serverPath, '.env.local') });
   dotenv.config({ path: path.join(serverPath, '.env') });
-} else {
-  // Temporary Debug: Log available keys on Vercel (sanitized)
-  const keys = Object.keys(process.env).filter(k => k.includes('JWT') || k.includes('SECRET'));
-  console.log(`[VERCEL_DEBUG] Available Keys: ${JSON.stringify(keys)}`);
 }
 
 const express = require('express');

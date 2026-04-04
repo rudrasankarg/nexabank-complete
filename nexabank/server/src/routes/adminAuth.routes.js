@@ -49,20 +49,12 @@ router.post('/login', async (req, res) => {
       [admin.id]
     );
 
-    // ─── NEW: Create physical Admin Session ───
-    const sessionResult = await query(
-      `INSERT INTO refresh_tokens (user_id, token_hash, device_id, device_name, ip_address, expires_at)
-       VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '7 days') RETURNING id`,
-      [admin.id, 'temp_hash_' + Date.now(), req.headers['x-device-id'] || 'admin-api', 'Admin Portal', req.ip]
-    );
-    const sessionId = sessionResult.rows[0].id;
-
     if (!process.env.ADMIN_JWT_SECRET) {
       throw new Error('ADMIN_JWT_SECRET is not defined in environment variables');
     }
 
     const token = jwt.sign(
-      { adminId: admin.id, role: admin.role, type: 'admin', sessionId },
+      { adminId: admin.id, role: admin.role, type: 'admin' },
       process.env.ADMIN_JWT_SECRET,
       { expiresIn: process.env.ADMIN_JWT_EXPIRES_IN || '8h' }
     );
@@ -73,7 +65,6 @@ router.post('/login', async (req, res) => {
       access_token: token,
       token_type: 'Bearer',
       expires_in: 28800,
-      sessionId,
       admin: {
         id: admin.id,
         employee_id: admin.employee_id,
@@ -85,11 +76,8 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('[ADMIN_LOGIN_ERROR]', error);
-    const visibleKeys = Object.keys(process.env).filter(k => k.includes('JWT') || k.includes('SECRET') || k.includes('ADMIN'));
     res.status(500).json({ 
-      error: 'An unexpected error occurred during admin login.',
-      debug_error: error.message,
-      hint: `Vercel is only sending these keys: [${visibleKeys.join(', ')}]. Is ADMIN_JWT_SECRET in that list?`
+      error: 'An unexpected error occurred during admin login.'
     });
   }
 });
