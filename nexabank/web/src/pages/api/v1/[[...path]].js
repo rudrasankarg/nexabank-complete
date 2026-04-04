@@ -1,5 +1,5 @@
 // Unified NexaBank API Proxy (Next.js Page API)
-import app from '../../../../server/src/index';
+import app from '../../../../../server/src/index';
 
 export const config = {
   api: {
