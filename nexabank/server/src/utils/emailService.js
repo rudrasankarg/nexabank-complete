@@ -11,13 +11,16 @@ const transporter = nodemailer.createTransport({
   maxMessages: 100
 });
 
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('[MAIL] Transporter Verification Failed:', error.message);
-  } else {
-    console.log('[MAIL] Transporter Ready for Delivery');
-  }
-});
+// ─── SMTP Transporter Verification ───────────────────────
+if (process.env.NODE_ENV !== 'development') {
+  transporter.verify((error, success) => {
+    if (error) {
+      console.error('[MAIL] Transporter Verification Failed:', error.message);
+    } else {
+      console.log('[MAIL] Transporter Ready for Delivery');
+    }
+  });
+}
 
 const templates = {
   welcome: (data) => ({
@@ -85,15 +88,21 @@ const templates = {
 };
 
 async function sendEmail({ to, subject, template, data, html }) {
-  // ─── Development Fast-OTP ────────────────────────────────
-  // In development, if an OTP is being sent, log it and return IMMEDIATELY
-  // to avoid 30s timeouts when SMTP is blocked or slow (Gmail).
-  if (process.env.NODE_ENV === 'development' && data && data.otp) {
-    console.log(`\n📬 [DEV_FAST_OTP] to: ${to} | OTP: ${data.otp}\n`);
-    return { messageId: 'dev-mock-id-' + Date.now() };
+  // ─── 🚀 0-Latency Development Bypass ─────────────────────
+  // Instantly return for any development OTP to avoid 30s SMTP hangs
+  if (process.env.NODE_ENV === 'development') {
+    const isOTP = (data && data.otp) || template === 'otp';
+    if (isOTP) {
+      console.log('\n' + '█'.repeat(50));
+      console.log(`📬 [DEV_OTP] To: ${to}`);
+      console.log(`🔑 Verification Code: ${data?.otp || 'N/A'}`);
+      console.log(`📝 Template: ${template || 'Manual'}`);
+      console.log('█'.repeat(50) + '\n');
+      return { messageId: 'dev-mock-id-' + Date.now(), accepted: [to] };
+    }
   }
 
-  console.log(`[MAIL] Dispatching to ${to} using Gmail Service`);
+  console.log(`[MAIL] Dispatching to ${to} using SMTP...`);
   try {
     const templateData = (template && templates[template]) ? templates[template](data) : null;
     
@@ -111,12 +120,8 @@ async function sendEmail({ to, subject, template, data, html }) {
     return info;
   } catch (err) {
     if (process.env.NODE_ENV === 'development') {
-      console.warn('⚠️  [DEV ONLY] SMTP Delivery failed, logging content below:');
-      console.log(`   To:      ${to}`);
-      console.log(`   Subject: ${subject}`);
-      if (data && data.otp) {
-        console.log(`   OTP:     ${data.otp} (Type: ${data.type || 'Internal'})`);
-      }
+      console.warn('⚠️  [DEV ONLY] SMTP Delivery failed:');
+      console.log(`   To:      ${to} | OTP: ${data?.otp || 'N/A'}`);
     }
     console.error('[MAIL] Dispatch ERROR:', err.message);
     throw err; // Still throw to maintain production behavior
