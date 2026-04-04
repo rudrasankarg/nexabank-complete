@@ -71,12 +71,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   useEffect(() => {
+    if (pathname === '/admin/login') return;
+
     adminApi.get('/admin/auth/me').then(r => setAdmin(r.data.admin)).catch(() => {
       router.push('/admin/login');
     });
     adminApi.get('/admin/stats').then(r => setStats(r.data)).catch(() => null);
     adminApi.get('/admin/notifications').then(r => setNotifications(r.data.notifications)).catch(() => []);
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
