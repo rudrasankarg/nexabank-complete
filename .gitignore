@@ -1,14 +1,12 @@
 nexabank/README1.md
 
-# Environment files — NEVER commit these, they contain secrets
+# Environment files
 .env
 .env.local
 .env.development
 .env.production
 .env.test
 .env.*.local
-
-# Keep the example template (no real secrets inside)
 !.env.example
 
 # Dependencies
